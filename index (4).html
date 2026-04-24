@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Market News Daily</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --gold: #f0b429;
+      --gold-dim: #c8952a;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --border: #1f2d45;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grain + grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(240,180,41,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,180,41,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glowing orb */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(240,180,41,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .ticker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(240,180,41,0.1);
+      border: 1px solid rgba(240,180,41,0.2);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+
+    .ticker-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 8vw, 52px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    h1 span { color: var(--gold); }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      font-weight: 300;
+      max-width: 380px;
+      margin: 0 auto;
+    }
+
+    /* Market strip */
+    .market-strip {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .market-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .up { color: var(--green); }
+    .down { color: var(--red); }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.7s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0.5;
+    }
+
+    .card:nth-child(2) { animation-delay: 0.1s; }
+    .card:nth-child(3) { animation-delay: 0.2s; }
+
+    .card-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    /* Form fields */
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus {
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 0 3px rgba(240,180,41,0.08);
+    }
+
+    input::placeholder { color: #374151; }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+      margin-top: 6px;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #0a0e1a;
+    }
+
+    .btn-primary:hover {
+      background: #f5c842;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(240,180,41,0.25);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid rgba(239,68,68,0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239,68,68,0.08);
+      border-color: var(--red);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Toast */
+    .toast {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-top: 14px;
+      font-weight: 500;
+      animation: fadeUp 0.3s ease both;
+    }
+
+    .toast.success {
+      display: flex;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.25);
+      color: var(--green);
+    }
+
+    .toast.error {
+      display: flex;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      color: var(--red);
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 4px 0 20px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Features */
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .feature-icon {
+      width: 28px;
+      height: 28px;
+      background: rgba(240,180,41,0.08);
+      border: 1px solid rgba(240,180,41,0.15);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 40px;
+      line-height: 1.8;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="ticker">
+        <span class="ticker-dot"></span>
+        Live Market Intelligence
+      </div>
+      <h1>Market News<br/><span>Daily</span></h1>
+      <p class="subtitle">Real-time stocks, crypto & forex insights delivered straight to your inbox </p>
+
+      <div class="market-strip">
+        <div class="market-chip">₿ BTC <span class="up">▲ 2.4%</span></div>
+        <div class="market-chip">Ξ ETH <span class="down">▼ 0.8%</span></div>
+        <div class="market-chip">S&P500 <span class="up">▲ 0.5%</span></div>
+        <div class="market-chip">EUR/USD <span class="down">▼ 0.2%</span></div>
+      </div>
+    </div>
+
+    <!-- Subscribe Card -->
+    <div class="card">
+      <div class="card-label">Join the newsletter</div>
+      <h2>Get the Edge</h2>
+      <p>Subscribe to receive daily market briefings — stocks, crypto, forex, and top financial headlines.</p>
+
+      <div class="features">
+        <div class="feature"><div class="feature-icon">📈</div> Stock market movers & top gainers</div>
+        <div class="feature"><div class="feature-icon">₿</div> Crypto prices & 24h changes</div>
+        <div class="feature"><div class="feature-icon">📰</div> Top 3 financial headlines daily</div>
+        <div class="feature"><div class="feature-icon">⏰</div> Delivered every morning at 7AM</div>
+      </div>
+
+      <div class="divider">subscribe</div>
+
+      <div class="field">
+        <label for="sub-name">Your Name</label>
+        <input type="text" id="sub-name" placeholder="e.g. Alex Kamau" />
+      </div>
+      <div class="field">
+        <label for="sub-email">Email Address</label>
+        <input type="email" id="sub-email" placeholder="you@example.com" />
+      </div>
+
+      <button class="btn btn-primary" onclick="handleSubscribe()">
+        Subscribe — It's Free →
+      </button>
+
+      <div class="toast" id="sub-toast"></div>
+    </div>
+
+    <!-- Unsubscribe Card -->
+    <div class="card">
+      <div class="card-label">Manage subscription</div>
+      <h2>Unsubscribe</h2>
+      <p>We're sad to see you go. Enter your email below to be removed from our mailing list immediately.</p>
+
+      <div class="field">
+        <label for="unsub-email">Email Address</label>
+        <input type="email" id="unsub-email" placeholder="you@example.com" />
+      </div>
+
+      <button class="btn btn-danger" onclick="handleUnsubscribe()">
+        Unsubscribe
+      </button>
+
+      <div class="toast" id="unsub-toast"></div>
+    </div>
+
+    <div class="footer">
+      Market News Daily &mdash; Built with n8n, Alpha Vantage & CoinGecko<br/>
+      No spam. Unsubscribe anytime. Your data is never sold.
+    </div>
+
+  </div>
+
+  <script>
+    // ⚠️ Replace these with your actual n8n webhook URLs after activating the workflows
+    const SUBSCRIBE_WEBHOOK = 'YOUR_N8N_SUBSCRIBE_WEBHOOK_URL';
+    const UNSUBSCRIBE_WEBHOOK = 'YOUR_N8N_UNSUBSCRIBE_WEBHOOK_URL';
+
+    function showToast(id, type, message) {
+      const toast = document.getElementById(id);
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${message}`;
+    }
+
+    async function handleSubscribe() {
+      const name = document.getElementById('sub-name').value.trim();
+      const email = document.getElementById('sub-email').value.trim();
+      const btn = document.querySelector('.btn-primary');
+
+      if (!name || !email) {
+        showToast('sub-toast', 'error', 'Please fill in both your name and email.');
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast('sub-toast', 'error', 'Please enter a valid email address.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Subscribing...';
+
+      try {
+        await fetch(SUBSCRIBE_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email })
+        });
+
+        showToast('sub-toast', 'success', `Welcome aboard, ${name}! Check your inbox for a confirmation.`);
+        document.getElementById('sub-name').value = '';
+        document.getElementById('sub-email').value = '';
+      } catch (err) {
+        showToast('sub-toast', 'error', 'Something went wrong. Please try again shortly.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Subscribe — It\'s Free →';
+      }
+    }
+
+    async function handleUnsubscribe() {
+      const email = document.getElementById('unsub-email').value.trim();
+      const btn = document.querySelector('.btn-danger');
+
+      if (!email) {
+        showToast('unsub-toast', 'error', 'Please enter your email address.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      try {
+        await fetch(UNSUBSCRIBE_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        showToast('unsub-toast', 'success', 'You have been unsubscribed. Sorry to see you go!');
+        document.getElementById('unsub-email').value = '';
+      } catch (err) {
+        showToast('unsub-toast', 'error', 'Something went wrong. Please try again shortly.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Unsubscribe';
+      }
+    }
+  </script>
+</body>
+</html>
